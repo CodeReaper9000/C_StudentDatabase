@@ -6,7 +6,7 @@
 #include <stdbool.h>
 #define MAX_NAME_LENGTH 50
 
-typedef struct{
+typedef struct{ 
     char name[MAX_NAME_LENGTH];
     int roll;
     float marks;
@@ -104,71 +104,39 @@ void add_student(){
 
 // function to delete a student from the CSV file
 void delete_student() {
-    FILE* fp = fopen("student.csv", "r");
-    if (fp == NULL) {
-        printf("Error: unable to open file\n");
-        return;
-    }
-
-    FILE* tmp_fp = fopen("temp.csv", "w");
-    if (tmp_fp == NULL) {
-        printf("Error: unable to open file temp.csv\n");
-        fclose(fp);
-        return;
-    }
-	
-	int roll_number;
-	printf("Enter roll number of student to be deleted: ");
-	scanf("%d\n",roll_number);
-	
-    char line[1024];
+    char roll_no[10];
     int found = 0;
-
-    while (fgets(line, 1024, fp) != NULL) {
-        char* token;
-        int i = 0;
-
-        token = strtok(line, ",");
-        while (token != NULL) {
-            i++;
-            
-            if (i == 0) { // roll number is in the 1st column
-                int rn = atoi(token);
-                printf("token = %d\n",rn);
-                if (rn == roll_number) {
-                    found = 1;
-                    break;
-                }
-            }
-
-            fprintf(tmp_fp, "%s", token);
-            if (i < 4) {
-                fprintf(tmp_fp, ",");
-            }
-
-            token = strtok(NULL, ",");
+    printf("Enter the roll no of the student you want to delete: ");
+    scanf("%s", roll_no);
+    FILE* fp1, * fp2;
+    fp1 = fopen("student.csv", "r");
+    fp2 = fopen("temp.csv", "w");
+    if (fp1 == NULL || fp2 == NULL) {
+        printf("Error opening files.\n");
+        exit(1);
+    }
+    char name[20], marks[10];
+    char grade[2];
+    char g;
+    char temp_roll_no[10];
+    while (fscanf(fp1, "%[^,],%[^,],%[^,],%s\n", temp_roll_no, name, marks, grade) != EOF) {
+        if (strcmp(temp_roll_no, roll_no) == 0) {
+            found = 1;
         }
-
-        if (found) {
-            break;
+        else{
+        	float m = atof(marks);
+        	fprintf(fp2, "%s,%s,%.2f,%s\n", temp_roll_no, name, m, grade);
         }
     }
-
     if (!found) {
-        printf("Error: student with roll number %d not found.\n", roll_number);
+        printf("Student with roll no %s not found.\n", roll_no);
     }
-
-    while (fgets(line, 1024, fp) != NULL) {
-        fprintf(tmp_fp, "%s", line);
-    }
-
-    fclose(fp);
-    fclose(tmp_fp);
-
+    else
+    	printf("Student with roll no %s deleted successfully.\n", roll_no);
+    fclose(fp1);
+    fclose(fp2);
     remove("student.csv");
     rename("temp.csv", "student.csv");
-
-    printf("Student with roll number %d deleted.\n", roll_number);
 }
 
 // Function to update student data
@@ -184,29 +152,37 @@ void update_student() {
         printf("Error opening files.\n");
         exit(1);
     }
-    char name[20];
-    int marks, grade;
+    char name[20], marks[10];
+    char grade[2];
+    char g;
+    //float marks;
+    //int marks, grade;
     char temp_roll_no[10];
-    while (fscanf(fp1, "%d,%[^,],%d,%d\n", temp_roll_no, name, &marks, &grade) != EOF) {
+    while (fscanf(fp1, "%[^,],%[^,],%[^,],%s\n", temp_roll_no, name, marks, grade) != EOF) {
         if (strcmp(temp_roll_no, roll_no) == 0) {
             found = 1;
             printf("Enter the new name of the student: ");
             scanf("%s", name);
             printf("Enter the new marks of the student: ");
-            scanf("%d", &marks);
-            printf("Enter the new grade of the student: ");
-            scanf("%d", &grade);
+            scanf("%s", marks);
+            g = get_grade(atof(marks));
+            char g2[2] = {g,'\0'};
+            float m = atof(marks);
+        	fprintf(fp2, "%s,%s,%.2f,%s\n", temp_roll_no, name, m, g2);
         }
-        fprintf(fp2, "%s,%s,%d,%d\n", temp_roll_no, name, marks, grade);
+        else{
+        	float m = atof(marks);
+        	fprintf(fp2, "%s,%s,%.2f,%s\n", temp_roll_no, name, m, grade);
+        }
     }
-    if (!found) {
+    if (!found) 
         printf("Student with roll no %s not found.\n", roll_no);
-    }
+    else 
+    	printf("Student with roll no %s updated successfully.\n", roll_no);
     fclose(fp1);
     fclose(fp2);
     remove("student.csv");
-    rename("temp.csv", "student.csv");
-    printf("Student with roll no %s updated successfully.\n", roll_no);
+    rename("temp.csv", "student.csv");    	
 }
 
 // Function to search for a student by roll number
